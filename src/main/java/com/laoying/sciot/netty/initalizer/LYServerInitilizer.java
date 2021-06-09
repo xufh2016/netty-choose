@@ -1,7 +1,6 @@
 package com.laoying.sciot.netty.initalizer;
 
 import com.laoying.sciot.netty.handler.LYServerHandler;
-import com.laoying.sciot.netty.handler.SocketChooseHandler;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;

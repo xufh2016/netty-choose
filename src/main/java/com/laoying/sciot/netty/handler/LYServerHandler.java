@@ -30,44 +30,39 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
         Channel channel = ctx.channel();
         //获取客户端地址
         SocketAddress socketAddress = channel.remoteAddress();
-        if (msg instanceof WebSocketFrame) {
-            String websocketInfo = ((TextWebSocketFrame) msg).text().trim();
-            System.out.println("收到的websocket info是："+websocketInfo);
-        } else {
-            String rcvMsg = (String) msg;
-            if (rcvMsg != null && !"".equals(rcvMsg.trim())) {
-                String jsonStr = rcvMsg.substring(rcvMsg.indexOf("{"), rcvMsg.lastIndexOf("}") + 1);
-                String rcvCrc = rcvMsg.substring(rcvMsg.lastIndexOf("}") + 1);
+        String rcvMsg = (String) msg;
+        if (rcvMsg != null && !"".equals(rcvMsg.trim())) {
+            String jsonStr = rcvMsg.substring(rcvMsg.indexOf("{"), rcvMsg.lastIndexOf("}") + 1);
+            String rcvCrc = rcvMsg.substring(rcvMsg.lastIndexOf("}") + 1);
 
-                String crc = CRC16Check.getCrc(jsonStr.getBytes());
-                //crc校验值相等，则进行存库
-                if (rcvCrc.equalsIgnoreCase(crc)) {
-                    //存库操作，并推送到前端
-                }
-                System.out.println("---------------Server接收到来自客户端的消息-------------" + rcvMsg);
-
-                System.out.println("接收到的crc码是：" + rcvCrc);
-                System.out.println("jsonStr是：" + jsonStr);
-                System.out.println("jsonStr的crc校验值是：" + CRC16Check.getCrc(jsonStr.getBytes()));
+            String crc = CRC16Check.getCrc(jsonStr.getBytes());
+            //crc校验值相等，则进行存库
+            if (rcvCrc.equalsIgnoreCase(crc)) {
+                //存库操作，并推送到前端
             }
-            System.out.println("执行channelRead~~~~~~~~~~~~");
+            System.out.println("---------------Server接收到来自客户端的消息-------------" + rcvMsg);
+
+            System.out.println("接收到的crc码是：" + rcvCrc);
+            System.out.println("jsonStr是：" + jsonStr);
+            System.out.println("jsonStr的crc校验值是：" + CRC16Check.getCrc(jsonStr.getBytes()));
+        }
+        System.out.println("执行channelRead~~~~~~~~~~~~");
 
 
-            channelGroup.forEach(item -> {
-                if (item != channel) {
-                    item.writeAndFlush(item.remoteAddress() + "----send msg---" + rcvMsg);
-                } else {
-                    item.writeAndFlush("[self]----" + rcvMsg);
-                }
-            });
+        channelGroup.forEach(item -> {
+            if (item != channel) {
+                item.writeAndFlush(item.remoteAddress() + "----send msg---" + rcvMsg);
+            } else {
+                item.writeAndFlush("[self]----" + rcvMsg);
+            }
+        });
 
-            ctx.channel().writeAndFlush("-----------server says hi---------------------" + ctx.channel().remoteAddress());
+        ctx.channel().writeAndFlush("-----------server says hi---------------------" + ctx.channel().remoteAddress());
 //                                            ByteBuf byteBuf = Unpooled.copiedBuffer("Hello , This is Server!!!", CharsetUtil.UTF_8);
 //                                            FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, byteBuf);
 //                                            response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain");
 //                                            response.headers().set(HttpHeaderNames.CONTENT_LENGTH, byteBuf.readableBytes());
 //                                            ctx.writeAndFlush(response);
-        }
     }
 
 
