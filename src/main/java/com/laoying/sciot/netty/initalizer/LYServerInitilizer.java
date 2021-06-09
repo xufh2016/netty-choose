@@ -7,8 +7,10 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 @ChannelHandler.Sharable
+@Component
 public class LYServerInitilizer extends ChannelInitializer {
     private static final Logger LOGGER = LoggerFactory.getLogger(LYServerInitilizer.class);
     @Override

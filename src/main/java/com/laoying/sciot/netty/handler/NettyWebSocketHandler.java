@@ -15,6 +15,7 @@ public class NettyWebSocketHandler extends SimpleChannelInboundHandler<TextWebSo
     protected void channelRead0(ChannelHandlerContext ctx, TextWebSocketFrame msg) throws Exception {
         //  在此处接收客户端发送的信息
         Channel channel = ctx.channel();
+        
         log.info("来自webSocket客户端" + channel.remoteAddress() + "的信息: " + msg.text());
     }
     @Override

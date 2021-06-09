@@ -32,23 +32,23 @@ public class SocketChooseHandler extends ByteToMessageDecoder {
         if (protocol.startsWith(WEBSOCKET_PREFIX)) {
             //  websocket连接时，执行以下处理
             // HttpServerCodec：将请求和应答消息解码为HTTP消息
-            ctx.pipeline().addLast("http-codec", new HttpServerCodec());
+            pipeline.addLast("http-codec", new HttpServerCodec());
 
             // HttpObjectAggregator：将HTTP消息的多个部分合成一条完整的HTTP消息
-            ctx.pipeline().addLast("aggregator", new HttpObjectAggregator(65535));
+            pipeline.addLast("aggregator", new HttpObjectAggregator(65535));
 
             // ChunkedWriteHandler：向客户端发送HTML5文件,文件过大会将内存撑爆
-            ctx.pipeline().addLast("http-chunked", new ChunkedWriteHandler());
+            pipeline.addLast("http-chunked", new ChunkedWriteHandler());
 
-            ctx.pipeline().addLast("WebSocketAggregator", new WebSocketFrameAggregator(65535));
+            pipeline.addLast("WebSocketAggregator", new WebSocketFrameAggregator(65535));
 
             //  若超过80秒未收到约定心跳，则主动断开channel释放资源
-            ctx.pipeline().addLast(new IdleStateHandler(80, 0, 0));
+            pipeline.addLast(new IdleStateHandler(80, 0, 0));
 //            ctx.pipeline().addLast(new NettyHeartKeeper(NettyHeartKeeper.TYPE_WEBSOCKET));
 
             //用于处理websocket, /ws为访问websocket时的uri
-            ctx.pipeline().addLast("ProtocolHandler", new WebSocketServerProtocolHandler("/ws"));
-            ctx.pipeline().addLast("WebsocketHandler", new NettyWebSocketHandler());
+            pipeline.addLast("ProtocolHandler", new WebSocketServerProtocolHandler("/ws"));
+            pipeline.addLast("WebsocketHandler", new NettyWebSocketHandler());
         } else {
             //  常规TCP连接时，执行以下处理
             pipeline.addLast(new StringEncoder(Charset.forName("GB2312")));
@@ -58,7 +58,7 @@ public class SocketChooseHandler extends ByteToMessageDecoder {
             pipeline.addLast("Tcp-Server", new LYServerHandler());
         }
         in.resetReaderIndex();
-        ctx.pipeline().remove(this.getClass());
+        pipeline.remove(this.getClass());
     }
 
     private String getBufStart(ByteBuf in) {
