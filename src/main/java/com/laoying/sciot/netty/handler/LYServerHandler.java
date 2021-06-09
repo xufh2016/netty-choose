@@ -1,12 +1,10 @@
 package com.laoying.sciot.netty.handler;
 
 import com.laoying.sciot.util.CRC16Check;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,16 +36,18 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
             String jsonStr = rcvMsg.substring(rcvMsg.indexOf("{"), rcvMsg.lastIndexOf("}") + 1);
             String rcvCrc = rcvMsg.substring(rcvMsg.lastIndexOf("}") + 1);
 
-            String crc = CRC16Check.getCrc(jsonStr.getBytes());
+            String crc = CRC16Check.getCrc(jsonStr.getBytes("gb2312"));
             //crc校验值相等，则进行存库
             if (rcvCrc.equalsIgnoreCase(crc)) {
                 //存库操作，并推送到前端
+                log.info("Crc校验通过，数据将被存库并推送到浏览器~~~~~~~");
+
             }
-            log.info("---------------Server接收到来自客户端的消息-------------" + rcvMsg);
+            log.info("---------------Server接收到来自客户端的消息-------------" + rcvMsg + ";" + "地址是：" + socketAddress);
 
             log.info("接收到的crc码是：" + rcvCrc);
             log.info("jsonStr是：" + jsonStr);
-            log.info("jsonStr的crc校验值是：" + CRC16Check.getCrc(jsonStr.getBytes()));
+            log.info("jsonStr的crc校验值是：" + CRC16Check.getCrc(jsonStr.getBytes("gb2312")));
         }
         log.info("执行channelRead~~~~~~~~~~~~");
 

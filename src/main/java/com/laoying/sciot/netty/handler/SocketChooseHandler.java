@@ -14,6 +14,7 @@ import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import org.springframework.stereotype.Component;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -61,12 +62,12 @@ public class SocketChooseHandler extends ByteToMessageDecoder {
         pipeline.remove(this.getClass());
     }
 
-    private String getBufStart(ByteBuf in) {
+    private String getBufStart(ByteBuf in) throws UnsupportedEncodingException {
         int length = in.readableBytes();
         // 标记读位置
         in.markReaderIndex();
         byte[] content = new byte[length];
         in.readBytes(content);
-        return new String(content);
+        return new String(content,"utf-8");
     }
 }
