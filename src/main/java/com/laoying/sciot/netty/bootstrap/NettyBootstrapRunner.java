@@ -4,6 +4,7 @@ import com.laoying.sciot.netty.initalizer.LYServerInitilizer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -46,6 +47,8 @@ public class NettyBootstrapRunner implements ApplicationRunner, ApplicationListe
                     .group(bossGroup, workerGroup)
                     //3、选择服务器的ServerSocketChannel实现
                     .channel(NioServerSocketChannel.class)
+                    .option(ChannelOption.SO_BACKLOG,300)
+                    .childOption(ChannelOption.SO_KEEPALIVE,true)
                     //4、boss负责处理连接，worker（child）负责读写，childHandler决定了将来child能执行哪些操作（handler）
                     .childHandler(
                             //5、代表和客户端进行数据读写的通道Initializer初始化，负责添加别的handlerapplicationContext.getBean(LYServerInitilizer.class)
