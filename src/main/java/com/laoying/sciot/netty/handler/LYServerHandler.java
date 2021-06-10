@@ -43,6 +43,9 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
             if (rcvCrc.equalsIgnoreCase(crc)) {
                 //存库操作，并推送到前端
                 log.info("Crc校验通过，数据将被存库并推送到浏览器~~~~~~~");
+                //1、存库
+
+                //2、推送数据
                 new PushService().pushMsgToAll(jsonStr);
             }
             log.info("---------------Server接收到来自客户端的消息-------------" + rcvMsg + ";" + "地址是：" + socketAddress);
