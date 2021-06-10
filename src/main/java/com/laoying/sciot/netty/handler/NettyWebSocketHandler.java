@@ -1,5 +1,6 @@
 package com.laoying.sciot.netty.handler;
 
+import com.laoying.sciot.netty.config.NettyConfig;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -20,26 +21,35 @@ public class NettyWebSocketHandler extends SimpleChannelInboundHandler<TextWebSo
     }
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-        super.handlerAdded(ctx);
+        log.info("handlerAdded被调用"+ctx.channel().id().asLongText());
+        NettyConfig.getChannelGroup().add(ctx.channel());
         log.info("添加webSocket连接" );
     }
 
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-        super.handlerRemoved(ctx);
         log.info("移除webSocket连接，ChannelId：" + ctx.channel().id().asLongText());
+        NettyConfig.getChannelGroup().remove(ctx.channel());
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        super.channelActive(ctx);
         log.info("webSocket建立连接");
 
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        super.channelInactive(ctx);
         log.info("webSocket断开连接");
     }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        log.info("异常：{}",cause.getMessage());
+        // 删除通道
+        NettyConfig.getChannelGroup().remove(ctx.channel());
+        ctx.close();
+    }
+
+
 }
