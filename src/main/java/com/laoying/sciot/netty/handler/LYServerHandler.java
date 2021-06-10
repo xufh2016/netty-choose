@@ -39,14 +39,15 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
             //crc校验值相等，则进行存库
             if (rcvCrc.equalsIgnoreCase(crc)) {
                 //存库操作，并推送到前端
+                LOGGER.info("-------开始接受数据----------");
             }
-            System.out.println("---------------Server接收到来自客户端的消息-------------" + rcvMsg);
+            LOGGER.info("---------------Server接收到来自客户端的消息-------------" + rcvMsg);
 
-            System.out.println("接收到的crc码是：" + rcvCrc);
-            System.out.println("jsonStr是：" + jsonStr);
-            System.out.println("jsonStr的crc校验值是：" + CRC16Check.getCrc(jsonStr.getBytes()));
+            LOGGER.info("接收到的crc码是：" + rcvCrc);
+            LOGGER.info("jsonStr是：" + jsonStr);
+            LOGGER.info("jsonStr的crc校验值是：" + CRC16Check.getCrc(jsonStr.getBytes()));
         }
-        System.out.println("执行channelRead~~~~~~~~~~~~");
+        LOGGER.info("执行channelRead~~~~~~~~~~~~");
 
 
         channelGroup.forEach(item -> {
@@ -68,13 +69,13 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("------------------channelRegistered---------");
+        LOGGER.info("------------------channelRegistered---------");
     }
 
 
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("-----------channelUnregistered----------");
+        LOGGER.info("-----------channelUnregistered----------");
     }
 
     @Override
@@ -84,25 +85,25 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
         channelGroup.writeAndFlush("---------------------[Server]-" + channel.remoteAddress() + "----------join in----------");
 
         channelGroup.add(channel);
-        System.out.println("--------------channelActive------------");
+        LOGGER.info("--------------channelActive------------");
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         Channel channel = ctx.channel();
-        System.out.println("----------channelInactive--------");
+        LOGGER.info("----------channelInactive--------");
         channelGroup.writeAndFlush("[Server]-" + channel.remoteAddress() + "-----left----");
         channelGroup.remove(channel);
     }
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("---------------channelReadComplete--------------");
+        LOGGER.info("---------------channelReadComplete--------------");
     }
 
     @Override
     public void channelWritabilityChanged(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("------------channelWritabilityChanged---------");
+        LOGGER.info("------------channelWritabilityChanged---------");
     }
 
     @Override
@@ -125,23 +126,23 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
             }
             ctx.channel().close();
         }
-        System.out.println("---------------userEventTriggered--------------");
+        LOGGER.info("---------------userEventTriggered--------------");
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        System.out.println("-----------exceptionCaught----------");
+        LOGGER.info("-----------exceptionCaught----------");
         //异常发生时关闭连接
         ctx.close();
     }
 
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("--------------handlerRemoved------------");
+        LOGGER.info("--------------handlerRemoved------------");
     }
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("---------------handlerAdded------------");
+        LOGGER.info("---------------handlerAdded------------");
     }
 }
