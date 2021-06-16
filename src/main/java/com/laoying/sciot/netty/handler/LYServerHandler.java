@@ -1,5 +1,6 @@
 package com.laoying.sciot.netty.handler;
 
+import com.laoying.sciot.netty.service.PushService;
 import com.laoying.sciot.util.CRC16Check;
 import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
@@ -46,6 +47,9 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
             if (rcvCrc.equalsIgnoreCase(crc)) {
                 //存库操作，并推送到前端
                 LOGGER.info("-------开始接受数据----------");
+
+                //2、推送数据
+                new PushService().pushMsgToAll(jsonStr);
             }
 
             LOGGER.info("接收到的crc码是：" + rcvCrc);
