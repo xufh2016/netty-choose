@@ -1,25 +1,12 @@
 package com.laoying.sciot.netty.initalizer;
 
-import com.laoying.sciot.netty.handler.DelimiterBasedFrameEncoder;
-import com.laoying.sciot.netty.handler.LYServerHandler;
 import com.laoying.sciot.netty.handler.SocketChooseHandler;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
-import io.netty.handler.codec.DelimiterBasedFrameDecoder;
-import io.netty.handler.codec.FixedLengthFrameDecoder;
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import io.netty.handler.codec.LineBasedFrameDecoder;
-import io.netty.handler.codec.string.StringDecoder;
-import io.netty.handler.codec.string.StringEncoder;
-import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.nio.charset.Charset;
-import java.util.concurrent.TimeUnit;
 
 @ChannelHandler.Sharable
 public class LYServerInitilizer extends ChannelInitializer {
