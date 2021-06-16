@@ -36,6 +36,7 @@ public class LYServerInitilizer extends ChannelInitializer {
 //        pipeline.addLast(new StringEncoder(CharsetUtil.UTF_8));
 //        pipeline.addLast(new LineBasedFrameDecoder(2048));
 //        pipeline.addLast(new LengthFieldBasedFrameDecoder());
+        //如果用特殊字符串作为分隔符使用DelimiterBasedFrameDecoder作为解码，如果使用回车换行则使用LineBasedFrameDecoder作为解码器
         pipeline.addLast(new DelimiterBasedFrameDecoder(2048, Unpooled.wrappedBuffer(delimiter.getBytes())));
         pipeline.addLast(new StringEncoder(Charset.forName("GB2312")));
         pipeline.addLast(new StringDecoder(Charset.forName("GB2312")));
