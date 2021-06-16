@@ -47,17 +47,13 @@ public class SocketChooseHandler extends ByteToMessageDecoder {
             pipeline.addLast("WebSocketAggregator", new WebSocketFrameAggregator(65535));
 
             //  若超过80秒未收到约定心跳，则主动断开channel释放资源
-            pipeline.addLast(new IdleStateHandler(80, 0, 0));
-//            ctx.pipeline().addLast(new NettyHeartKeeper(NettyHeartKeeper.TYPE_WEBSOCKET));
+            pipeline.addLast(new IdleStateHandler(60, 0, 0));
 
             //用于处理websocket, /ws为访问websocket时的uri
             pipeline.addLast("ProtocolHandler", new WebSocketServerProtocolHandler("/ws"));
             pipeline.addLast("WebsocketHandler", new NettyWebSocketHandler());
         } else {
             //  常规TCP连接时，执行以下处理
-            // 当服务器端收到数据后需要使用解码器进行解码。applicationContext.getBean(LYServerHandler.class)
-
-
             pipeline.addLast("delimiterBasedFrameDecoder", new DelimiterBasedFrameDecoder(2048, Unpooled.wrappedBuffer(delimiter.getBytes())));
             pipeline.addLast("stringEncoder", new StringEncoder(Charset.forName("GB2312")));
             pipeline.addLast("stringDecoder", new StringDecoder(Charset.forName("GB2312")));
