@@ -1,10 +1,7 @@
 package com.laoying.sciot.netty.handler;
 
 import com.laoying.sciot.util.CRC16Check;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
@@ -126,7 +123,7 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
                 case READER_IDLE:
                     eventType = "READER_IDLE";
 //                  发生读事件空闲，则告诉数据库及客户端设备已离线
-
+                    ctx.writeAndFlush("heartbeat").addListener(ChannelFutureListener.CLOSE_ON_FAILURE) ;
                     break;
                 case WRITER_IDLE:
                     eventType = "WRITER_IDLE";
