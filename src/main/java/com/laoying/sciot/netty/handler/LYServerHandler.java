@@ -17,6 +17,10 @@ import org.slf4j.LoggerFactory;
 import java.io.UnsupportedEncodingException;
 import java.net.SocketAddress;
 
+/**
+ * 1、数据不完整：INCOMPLETE_DATA
+ * 2、数据错误：ERROR_DATA
+ */
 @ChannelHandler.Sharable
 public class LYServerHandler extends ChannelInboundHandlerAdapter {
 
@@ -31,7 +35,12 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
         //获取客户端地址
         SocketAddress socketAddress = channel.remoteAddress();
         String rcvMsg = (String) msg;
+        LOGGER.info("接收到来自客户端：" + socketAddress.toString() + "的数据是：" + rcvMsg);
         if (rcvMsg != null && !"".equals(rcvMsg.trim())) {
+            if (!rcvMsg.contains("{")||!rcvMsg.contains("}")){
+                channel.writeAndFlush("ERROR_DATA");
+                return;
+            }
             String jsonStr = rcvMsg.substring(rcvMsg.indexOf("{"), rcvMsg.lastIndexOf("}") + 1);
             String rcvCrc = rcvMsg.substring(rcvMsg.lastIndexOf("}") + 1);
 
@@ -41,7 +50,6 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
                 //存库操作，并推送到前端
                 LOGGER.info("-------开始接受数据----------");
             }
-            LOGGER.info("---------------Server接收到来自客户端的消息-------------" + rcvMsg);
 
             LOGGER.info("接收到的crc码是：" + rcvCrc);
             LOGGER.info("jsonStr是：" + jsonStr);
@@ -49,14 +57,14 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
         }
         LOGGER.info("执行channelRead~~~~~~~~~~~~");
 
-
-        channelGroup.forEach(item -> {
+        //广播
+        /*channelGroup.forEach(item -> {
             if (item != channel) {
                 item.writeAndFlush(item.remoteAddress() + "----send msg---" + rcvMsg);
             } else {
                 item.writeAndFlush("[self]----" + rcvMsg);
             }
-        });
+        });*/
 
         ctx.channel().writeAndFlush("-----------server says hi---------------------" + ctx.channel().remoteAddress());
 //                                            ByteBuf byteBuf = Unpooled.copiedBuffer("Hello , This is Server!!!", CharsetUtil.UTF_8);
@@ -117,6 +125,8 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
                     break;
                 case READER_IDLE:
                     eventType = "READER_IDLE";
+//                  发生读事件空闲，则告诉数据库及客户端设备已离线
+
                     break;
                 case WRITER_IDLE:
                     eventType = "WRITER_IDLE";
@@ -131,7 +141,7 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        LOGGER.info("-----------exceptionCaught----------");
+        LOGGER.info("-----------exceptionCaught----------" + cause.getMessage());
         //异常发生时关闭连接
         ctx.close();
     }

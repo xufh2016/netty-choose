@@ -5,6 +5,9 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.FixedLengthFrameDecoder;
+import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
+import io.netty.handler.codec.LineBasedFrameDecoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
@@ -26,9 +29,11 @@ public class LYServerInitilizer extends ChannelInitializer {
 //                                    pipeline.addLast(new LengthFieldPrepender(4));
 //        pipeline.addLast(new StringDecoder(CharsetUtil.UTF_8));//StringDecoder将ByteBuf转换为字符串,解码器，客户端向服务器端传输数据时需要编码器，
 //        pipeline.addLast(new StringEncoder(CharsetUtil.UTF_8));
+//        pipeline.addLast(new LineBasedFrameDecoder(2048));
+//        pipeline.addLast(new LengthFieldBasedFrameDecoder());
         pipeline.addLast(new StringEncoder(Charset.forName("GB2312")));
         pipeline.addLast(new StringDecoder(Charset.forName("GB2312")));
-        pipeline.addLast(new IdleStateHandler(1, 1, 1, TimeUnit.MINUTES));//心跳检测
+        pipeline.addLast(new IdleStateHandler(1, 0, 0, TimeUnit.MINUTES));//心跳检测
         // 当服务器端收到数据后需要使用解码器进行解码。applicationContext.getBean(LYServerHandler.class)
         pipeline.addLast("Tcp-Server",new LYServerHandler());
     }
