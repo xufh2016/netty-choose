@@ -1,9 +1,11 @@
 package com.laoying.sciot.netty.handler;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketFrameAggregator;
@@ -30,6 +32,7 @@ public class SocketChooseHandler extends ByteToMessageDecoder {
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         String protocol = getBufStart(in);
         ChannelPipeline pipeline = ctx.channel().pipeline();
+        String delimiter = "##";
         if (protocol.startsWith(WEBSOCKET_PREFIX)) {
             //  websocket连接时，执行以下处理
             // HttpServerCodec：将请求和应答消息解码为HTTP消息
@@ -52,10 +55,14 @@ public class SocketChooseHandler extends ByteToMessageDecoder {
             pipeline.addLast("WebsocketHandler", new NettyWebSocketHandler());
         } else {
             //  常规TCP连接时，执行以下处理
-            pipeline.addLast(new StringEncoder(Charset.forName("GB2312")));
-            pipeline.addLast(new StringDecoder(Charset.forName("GB2312")));
-            pipeline.addLast(new IdleStateHandler(1, 1, 1, TimeUnit.MINUTES));//心跳检测
             // 当服务器端收到数据后需要使用解码器进行解码。applicationContext.getBean(LYServerHandler.class)
+
+
+            pipeline.addLast("delimiterBasedFrameDecoder", new DelimiterBasedFrameDecoder(2048, Unpooled.wrappedBuffer(delimiter.getBytes())));
+            pipeline.addLast("stringEncoder", new StringEncoder(Charset.forName("GB2312")));
+            pipeline.addLast("stringDecoder", new StringDecoder(Charset.forName("GB2312")));
+            pipeline.addLast("idleStateHandler", new IdleStateHandler(1, 0, 0, TimeUnit.MINUTES));//心跳检测
+            pipeline.addLast("delimiterBasedFrameEncoder", new DelimiterBasedFrameEncoder(delimiter));
             pipeline.addLast("Tcp-Server", new LYServerHandler());
         }
         in.resetReaderIndex();
@@ -68,6 +75,6 @@ public class SocketChooseHandler extends ByteToMessageDecoder {
         in.markReaderIndex();
         byte[] content = new byte[length];
         in.readBytes(content);
-        return new String(content,"utf-8");
+        return new String(content, "utf-8");
     }
 }
