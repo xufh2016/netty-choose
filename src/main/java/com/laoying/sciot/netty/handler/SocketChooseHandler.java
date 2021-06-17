@@ -47,7 +47,7 @@ public class SocketChooseHandler extends ByteToMessageDecoder {
             pipeline.addLast("WebSocketAggregator", new WebSocketFrameAggregator(65535));
 
             //  若超过80秒未收到约定心跳，则主动断开channel释放资源
-            pipeline.addLast(new IdleStateHandler(60, 0, 0));
+//            pipeline.addLast(new IdleStateHandler(1, 0, 0,TimeUnit.MINUTES));
 
             //用于处理websocket, /ws为访问websocket时的uri
             pipeline.addLast("ProtocolHandler", new WebSocketServerProtocolHandler("/ws"));
