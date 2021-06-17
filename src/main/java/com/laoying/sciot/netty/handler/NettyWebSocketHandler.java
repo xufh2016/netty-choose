@@ -52,7 +52,9 @@ public class NettyWebSocketHandler extends SimpleChannelInboundHandler<TextWebSo
         ctx.close();
     }
 
-   /* @Override
+   /*
+   //长链接，后端不再做心跳检测处理
+   @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof IdleStateEvent) {
             IdleStateEvent event = (IdleStateEvent) evt;
