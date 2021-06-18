@@ -1,5 +1,9 @@
 package com.laoying.sciot.netty.handler;
 
+import cn.hutool.json.JSON;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.laoying.sciot.netty.config.NettyConfig;
 import com.laoying.sciot.netty.service.PushService;
 import com.laoying.sciot.util.CRC16Check;
 import io.netty.channel.*;
@@ -14,13 +18,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.net.SocketAddress;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 1、数据不完整：INCOMPLETE_DATA
  * 2、数据错误：ERROR_DATA
  */
 @ChannelHandler.Sharable
-public class LYServerHandler extends ChannelInboundHandlerAdapter {
+public class LYServerHandler extends SimpleChannelInboundHandler<String> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LYServerHandler.class);
 
@@ -28,11 +33,10 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     //读事件
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws UnsupportedEncodingException {
+    public void channelRead0(ChannelHandlerContext ctx, String rcvMsg) throws UnsupportedEncodingException {
         Channel channel = ctx.channel();
         //获取客户端地址
         SocketAddress socketAddress = channel.remoteAddress();
-        String rcvMsg = (String) msg;
         LOGGER.info("接收到来自客户端：" + socketAddress.toString() + "的数据是：" + rcvMsg);
         if (rcvMsg != null && !"".equals(rcvMsg.trim())) {
             if (!rcvMsg.contains("{")||!rcvMsg.contains("}")){
@@ -45,8 +49,17 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
             String crc = CRC16Check.getCrc(jsonStr.getBytes());
             //crc校验值相等，则进行存库
             if (rcvCrc.equalsIgnoreCase(crc)) {
-                //存库操作，并推送到前端
+                //存库操作，并推送到前端(1、检测烟气的数据；2、设备在线还是不在线的状态)
                 LOGGER.info("-------开始接受数据----------");
+                JSONObject jsonObject = JSONUtil.parseObj(jsonStr);
+
+                String instID = jsonObject.get("InstID").toString();
+
+                LOGGER.info("设备编号是："+instID);
+                ChannelGroup channelGroup = NettyConfig.getChannelGroup();
+                channelGroup.add(channel);
+                ConcurrentHashMap<String, Channel> userChannelMap = NettyConfig.getUserChannelMap();
+                userChannelMap.put(instID,channel);
 
                 //2、推送数据
                 new PushService().pushMsgToAll(jsonStr);
@@ -58,21 +71,7 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
         }
         LOGGER.info("执行channelRead~~~~~~~~~~~~");
 
-        //广播
-        /*channelGroup.forEach(item -> {
-            if (item != channel) {
-                item.writeAndFlush(item.remoteAddress() + "----send msg---" + rcvMsg);
-            } else {
-                item.writeAndFlush("[self]----" + rcvMsg);
-            }
-        });*/
-
         ctx.channel().writeAndFlush("-----------server says hi---------------------" + ctx.channel().remoteAddress());
-//                                            ByteBuf byteBuf = Unpooled.copiedBuffer("Hello , This is Server!!!", CharsetUtil.UTF_8);
-//                                            FullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, byteBuf);
-//                                            response.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/plain");
-//                                            response.headers().set(HttpHeaderNames.CONTENT_LENGTH, byteBuf.readableBytes());
-//                                            ctx.writeAndFlush(response);
     }
 
 
@@ -149,11 +148,14 @@ public class LYServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+        //tcp连接断开时触发。websocket通知前端设备已离线
         LOGGER.info("--------------handlerRemoved------------");
     }
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+        super.handlerAdded(ctx);
+        LOGGER.info("-------TCP Socket连接已添加-------");
         LOGGER.info("---------------handlerAdded------------");
     }
 }
