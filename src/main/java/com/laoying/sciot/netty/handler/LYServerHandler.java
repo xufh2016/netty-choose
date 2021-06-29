@@ -50,28 +50,28 @@ public class LYServerHandler extends SimpleChannelInboundHandler<String> {
             //crc校验值相等，则进行存库
             if (rcvCrc.equalsIgnoreCase(crc)) {
                 //存库操作，并推送到前端(1、检测烟气的数据；2、设备在线还是不在线的状态)
-                LOGGER.info("-------开始接受数据----------");
+//                LOGGER.info("-------开始接受数据----------");
                 JSONObject jsonObject = JSONUtil.parseObj(jsonStr);
 
                 String instID = jsonObject.get("InstID").toString();
 
-                LOGGER.info("设备编号是："+instID);
-                ChannelGroup channelGroup = NettyConfig.getChannelGroup();
-                channelGroup.add(channel);
-                ConcurrentHashMap<String, Channel> userChannelMap = NettyConfig.getUserChannelMap();
-                userChannelMap.put(instID,channel);
+//                LOGGER.info("设备编号是："+instID);
+//                ChannelGroup channelGroup = NettyConfig.getChannelGroup();
+//                channelGroup.add(channel);
+//                ConcurrentHashMap<String, Channel> userChannelMap = NettyConfig.getUserChannelMap();
+//                userChannelMap.put(instID,channel);
 
                 //2、推送数据
                 new PushService().pushMsgToAll(jsonStr);
             }
 
-            LOGGER.info("接收到的crc码是：" + rcvCrc);
-            LOGGER.info("jsonStr是：" + jsonStr);
-            LOGGER.info("jsonStr的crc校验值是：" + CRC16Check.getCrc(jsonStr.getBytes()));
+//            LOGGER.info("接收到的crc码是：" + rcvCrc);
+//            LOGGER.info("jsonStr是：" + jsonStr);
+//            LOGGER.info("jsonStr的crc校验值是：" + CRC16Check.getCrc(jsonStr.getBytes()));
         }
-        LOGGER.info("执行channelRead~~~~~~~~~~~~");
-
-        ctx.channel().writeAndFlush("-----------server says hi---------------------" + ctx.channel().remoteAddress());
+//        LOGGER.info("执行channelRead~~~~~~~~~~~~");
+//
+//        ctx.channel().writeAndFlush("-----------server says hi---------------------" + ctx.channel().remoteAddress());
     }
 
 

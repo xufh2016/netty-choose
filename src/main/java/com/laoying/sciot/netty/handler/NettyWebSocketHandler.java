@@ -1,23 +1,106 @@
 package com.laoying.sciot.netty.handler;
 
+import com.alibaba.fastjson.JSONObject;
 import com.laoying.sciot.netty.config.NettyConfig;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.*;
+import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.websocketx.*;
+import io.netty.handler.timeout.IdleStateEvent;
+import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * websocket处理器
  */
 @Slf4j
-public class NettyWebSocketHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
-    @Override
-    protected void channelRead0(ChannelHandlerContext ctx, TextWebSocketFrame msg) throws Exception {
-        //  在此处接收客户端发送的信息
-        Channel channel = ctx.channel();
+public class NettyWebSocketHandler extends SimpleChannelInboundHandler<Object> {
+    private WebSocketServerHandshaker handshaker;
 
-        log.info("来自webSocket客户端" + channel.remoteAddress() + "的信息: " + msg.text());
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, Object msg) throws Exception {
+        Channel channel = ctx.channel();
+        if (msg instanceof FullHttpRequest) {
+            handleHttpRequest(ctx, (FullHttpRequest) msg);
+        } else if (msg instanceof WebSocketFrame) {
+            handleWebsocketFrame(ctx, (WebSocketFrame) msg);
+        }
+    }
+
+    private void handleWebsocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
+        // 判断是否关闭链路的指令
+        if (frame instanceof CloseWebSocketFrame) {
+            handshaker.close(ctx.channel(), (CloseWebSocketFrame) frame.retain());
+            return;
+        }
+        // 判断是否ping消息，如果是，则构造pong消息返回。用于心跳检测
+        if (frame instanceof PingWebSocketFrame) {
+            ctx.channel().write(new PongWebSocketFrame(frame.content().retain()));
+            return;
+        }
+
+        // 本例程仅支持文本消息，不支持二进制消息
+        if (!(frame instanceof TextWebSocketFrame)) {
+            System.out.println("本例程仅支持文本消息，不支持二进制消息");
+            throw new UnsupportedOperationException(
+                    String.format("%s frame types not supported", frame.getClass().getName()));
+        }
+
+        //处理客户端请求并返回应答消息
+        String request = ((TextWebSocketFrame) frame).text();
+        System.out.println("服务端收到：" + request);
+
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("time", format.format(new Date()));
+        jsonObject.put("channelId", ctx.channel().id().asShortText());
+        jsonObject.put("request", request);
+
+        TextWebSocketFrame tws = new TextWebSocketFrame(jsonObject.toJSONString());
+
+        // 返回【谁发的发给谁】
+        ctx.channel().writeAndFlush(tws);
+
+    }
+
+    private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest req) {
+        //如果HTTP解码失败，返回异常。要求Upgrade为websocket，过滤掉get/Post
+        if (!req.decoderResult().isSuccess() || (!"websocket".equals(req.headers().get("Upgrade")))) {
+            //若不是websocket方式，则创建BAD_REQUEST（400）的req，返回给客户端
+            sendHttpResponse(ctx, req, new DefaultFullHttpResponse(
+                    HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST));
+            return;
+        }
+        String uri = req.uri();
+        log.info(uri + "------------uri------------");
+        String targetParam = uri.substring(uri.lastIndexOf("/") + 1);
+        log.info(targetParam + "-------------targetParam-------------");
+    }
+
+    private void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, DefaultFullHttpResponse res) {
+        // 返回应答给客户端
+        if (res.status().code() != 200) {
+            ByteBuf buf = Unpooled.copiedBuffer(res.status().toString(), CharsetUtil.UTF_8);
+            res.content().writeBytes(buf);
+            buf.release();
+            HttpUtil.setContentLength(res, res.content().readableBytes());
+        }
+
+        ChannelFuture f = ctx.channel().writeAndFlush(res);
+
+        // 如果是非Keep-Alive，关闭连接
+        if (!HttpUtil.isKeepAlive(req) || res.status().code() != 200) {
+            f.addListener(ChannelFutureListener.CLOSE);
+        }
+    }
+
+    @Override
+    public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        ctx.flush();
     }
 
     @Override
@@ -52,9 +135,8 @@ public class NettyWebSocketHandler extends SimpleChannelInboundHandler<TextWebSo
         ctx.close();
     }
 
-   /*
-   //长链接，后端不再做心跳检测处理
-   @Override
+    /*//长链接，后端不再做心跳检测处理
+    @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof IdleStateEvent) {
             IdleStateEvent event = (IdleStateEvent) evt;
